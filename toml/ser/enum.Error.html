@@ -57,7 +57,7 @@
     DateInvalid,
     NumberInvalid,
     UnsupportedNone,
-    Custom(<a class="struct" href="https://doc.rust-lang.org/nightly/collections/string/struct.String.html" title="struct collections::string::String">String</a>),
+    Custom(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
     // some variants omitted
 }</pre><div class='docblock'><p>Errors that can occur when serializing a type.</p>
 </div><h2 id='variants' class='variants'>Variants</h2>
@@ -76,7 +76,7 @@ generated.</p>
 </div><span id='variant.DateInvalid' class='variant'><span id='DateInvalid.v' class='invisible'><code>DateInvalid</code></span></span><div class='docblock'><p>A serialized date was invalid.</p>
 </div><span id='variant.NumberInvalid' class='variant'><span id='NumberInvalid.v' class='invisible'><code>NumberInvalid</code></span></span><div class='docblock'><p>A serialized number was invalid.</p>
 </div><span id='variant.UnsupportedNone' class='variant'><span id='UnsupportedNone.v' class='invisible'><code>UnsupportedNone</code></span></span><div class='docblock'><p>None was attempted to be serialized, but it&#39;s not supported.</p>
-</div><span id='variant.Custom' class='variant'><span id='Custom.v' class='invisible'><code>Custom(<a class="struct" href="https://doc.rust-lang.org/nightly/collections/string/struct.String.html" title="struct collections::string::String">String</a>)</code></span></span><div class='docblock'><p>A custom error which could be generated when serializing a particular
+</div><span id='variant.Custom' class='variant'><span id='Custom.v' class='invisible'><code>Custom(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>A custom error which could be generated when serializing a particular
 type.</p>
 </div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="enum" href="../../toml/ser/enum.Error.html" title="enum toml::ser::Error">Error</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/toml/ser.rs.html#110' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.fmt' class="method"><span id='fmt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span></h4>

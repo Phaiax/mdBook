@@ -7,7 +7,7 @@ $( document ).ready(function() {
     window.onunload = function(){};
 
     // Set theme
-    var theme = store.get('theme');
+    var theme = store.get('mdbook-theme');
     if (theme === null || theme === undefined) { theme = 'light'; }
 
     set_theme(theme);
@@ -17,7 +17,7 @@ $( document ).ready(function() {
         tabReplace: '    ', // 4 spaces
         languages: [],      // Languages used for auto-detection
     });
-    
+
     if (window.ace) {
         // language-rust class needs to be removed for editable
         // blocks or highlightjs will capture events
@@ -31,18 +31,20 @@ $( document ).ready(function() {
             hljs.highlightBlock(block);
         });
     }
-    
+
     // Adding the hljs class gives code blocks the color css
     // even if highlighting doesn't apply
     $('code').addClass('hljs');
 
     var KEY_CODES = {
         PREVIOUS_KEY: 37,
-        NEXT_KEY: 39
+        NEXT_KEY: 39,
+        SEARCH_KEY: 83
     };
 
     $(document).on('keydown', function (e) {
         if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) { return; }
+        if ($('#searchbar').is( ":focus" )) { return; }
         switch (e.keyCode) {
             case KEY_CODES.NEXT_KEY:
                 e.preventDefault();
@@ -55,6 +57,10 @@ $( document ).ready(function() {
                 if($('.nav-chapters.previous').length) {
                     window.location.href = $('.nav-chapters.previous').attr('href');
                 }
+                break;
+            case KEY_CODES.SEARCH_KEY:
+                e.preventDefault();
+                $('#searchbar').focus();
                 break;
         }
     });
@@ -82,16 +88,81 @@ $( document ).ready(function() {
         sidebar.scrollTop(activeSection.offset().top);
     }
 
+    // For testing purposes: Index current page
+    var searchindex = create_text_searchindex();
+    var current_searchterm = "";
+    var teaser_size_half = 80;
 
-    // Print button
-    $("#print-button").click(function(){
-        var printWindow = window.open("print.html");
+    // Searchbar
+    $("#searchbar").on('keyup', function (e) {
+        var display = $('#searchresults');
+        var outer = $("#searchresults-outer");
+
+        var searchterm = e.target.value.trim();
+        if (searchterm != "") {
+            // keep searchbar expanded
+            $(e.target).addClass("active");
+
+            // Don't search twice the same
+            if (current_searchterm == searchterm) { return; }
+            else { current_searchterm = searchterm; }
+
+            // Do the actual search
+            var results = searchindex.search(searchterm, {
+                bool: "AND",
+                expand: true
+            });
+
+            // Display search metrics
+            var searchheader = "";
+            if (results.length > 0) {
+                searchheader = results.length + " search results for '" + searchterm + "':";
+            } else if (results.length == 1) {
+                searchheader = results.length + " search result for '" + searchterm + "':";
+            } else {
+                searchheader = "No search results for '" + searchterm + "'.";
+            }
+            $('#searchresults-header').text(searchheader);
+
+            // Clear and insert results
+            var firstterm = searchterm.split(' ')[0];
+            display.empty();
+            for(var i = 0, size = results.length; i < size ; i++){
+                var result = results[i];
+                document.lsd = result.doc;
+                var firstoccurence = result.doc.body.search(firstterm);
+                var teaser = "";
+                if (firstoccurence != -1) {
+                    var teaserstartindex = firstoccurence - teaser_size_half;
+                    var nextwordindex = result.doc.body.indexOf(" ", teaserstartindex);
+                    if (nextwordindex != -1) {
+                        teaserstartindex = nextwordindex;
+                    }
+                    var teaserendindex = firstoccurence + teaser_size_half;
+                    nextwordindex = result.doc.body.indexOf(" ", teaserendindex);
+                    if (nextwordindex != -1) {
+                        teaserendindex = nextwordindex;
+                    }
+                    teaser = (teaserstartindex > 0) ? "..." : "";
+                    teaser += result.doc.body.substring(teaserstartindex, teaserendindex) + "...";
+                } else {
+                    teaser = result.doc.body.substr(0, 80) + "...";
+                }
+
+                display.append('<li><a href="' + result.ref + '">' + result.doc.title + '</a>: '
+                    + teaser + "</li>");
+            }
+
+            // Display and scroll to results
+            sidebar.scrollTop(0);
+            outer.slideDown();
+        } else {
+            // searchbar can shrink
+            $(e.target).removeClass("active");
+            outer.slideUp();
+            display.empty();
+        }
     });
-
-    if( url.substring(url.lastIndexOf('/')+1) == "print.html" ) {
-        window.print();
-    }
-
 
     // Theme button
     $("#theme-toggle").click(function(){
@@ -128,34 +199,34 @@ $( document ).ready(function() {
 
     function set_theme(theme) {
         let ace_theme;
-        
+
         if (theme == 'coal' || theme == 'navy') {
             $("[href='ayu-highlight.css']").prop('disabled', true);
             $("[href='tomorrow-night.css']").prop('disabled', false);
             $("[href='highlight.css']").prop('disabled', true);
-            
+
             ace_theme = "ace/theme/tomorrow_night";
         } else if (theme == 'ayu') {
             $("[href='ayu-highlight.css']").prop('disabled', false);
             $("[href='tomorrow-night.css']").prop('disabled', true);
             $("[href='highlight.css']").prop('disabled', true);
-            
+
             ace_theme = "ace/theme/tomorrow_night";
         } else {
             $("[href='ayu-highlight.css']").prop('disabled', true);
             $("[href='tomorrow-night.css']").prop('disabled', true);
             $("[href='highlight.css']").prop('disabled', false);
-            
+
             ace_theme = "ace/theme/dawn";
         }
-        
+
         if (window.ace && window.editors) {
             window.editors.forEach(function(editor) {
                 editor.setTheme(ace_theme);
             });
         }
 
-        store.set('theme', theme);
+        store.set('mdbook-theme', theme);
 
         $('body').removeClass().addClass(theme);
     }
@@ -219,7 +290,7 @@ $( document ).ready(function() {
             pre_block.prepend("<div class=\"buttons\"></div>");
             buttons = pre_block.find(".buttons");
         }
-        buttons.prepend("<i class=\"fa fa-play play-button\"></i>");
+        buttons.prepend("<i class=\"fa fa-play play-button hidden\"></i>");
         buttons.prepend("<i class=\"fa fa-copy clip-button\"><i class=\"tooltiptext\"></i></i>");
 
         let code_block = pre_block.find("code").first();
@@ -245,14 +316,7 @@ $( document ).ready(function() {
         text: function(trigger) {
             hideTooltip(trigger);
             let playpen = $(trigger).parents(".playpen");
-            let code_block = playpen.find("code").first();
-
-            if (window.ace && code_block.hasClass("editable")) {
-                let editor = window.ace.edit(code_block.get(0));
-                return editor.getValue();
-            } else {
-                return code_block.get(0).textContent;
-            }
+            return playpen_text(playpen);
         }
     });
     clipboardSnippets.on('success', function(e) {
@@ -262,7 +326,82 @@ $( document ).ready(function() {
     clipboardSnippets.on('error', function(e) {
             showTooltip(e.trigger, "Clipboard error!");
     });
+
+    $.ajax({
+        url: "https://play.rust-lang.org/meta/crates",
+        method: "POST",
+        crossDomain: true,
+        dataType: "json",
+        contentType: "application/json",
+        success: function(response){
+            // get list of crates available in the rust playground
+            let playground_crates = response.crates.map(function(item) {return item["id"];} );
+            $(".playpen").each(function(block) {
+                handle_crate_list_update($(this), playground_crates);
+            });
+        },
+    });
+
 });
+
+function playpen_text(playpen) {
+    let code_block = playpen.find("code").first();
+
+    if (window.ace && code_block.hasClass("editable")) {
+        let editor = window.ace.edit(code_block.get(0));
+        return editor.getValue();
+    } else {
+        return code_block.get(0).textContent;
+    }
+}
+
+function handle_crate_list_update(playpen_block, playground_crates) {
+    // update the play buttons after receiving the response
+    update_play_button(playpen_block, playground_crates);
+
+    // and install on change listener to dynamically update ACE editors
+    if (window.ace) {
+        let code_block = playpen_block.find("code").first();
+        if (code_block.hasClass("editable")) {
+            let editor = window.ace.edit(code_block.get(0));
+            editor.on("change", function(e){
+                update_play_button(playpen_block, playground_crates);
+            });
+        }
+    }
+}
+
+// updates the visibility of play button based on `no_run` class and
+// used crates vs ones available on http://play.rust-lang.org
+function update_play_button(pre_block, playground_crates) {
+    var play_button = pre_block.find(".play-button");
+
+    var classes = pre_block.find("code").attr("class").split(" ");
+    // skip if code is `no_run`
+    if (classes.indexOf("no_run") > -1) {
+        play_button.addClass("hidden");
+        return;
+    }
+
+    // get list of `extern crate`'s from snippet
+    var txt = playpen_text(pre_block);
+    var re = /extern\s+crate\s+([a-zA-Z_0-9]+)\s*;/g;
+    var snippet_crates = [];
+    while (item = re.exec(txt)) {
+        snippet_crates.push(item[1]);
+    }
+
+    // check if all used crates are available on play.rust-lang.org
+    var all_available = snippet_crates.every(function(elem) {
+        return playground_crates.indexOf(elem) > -1;
+    });
+
+    if (all_available) {
+        play_button.removeClass("hidden");
+    } else {
+        play_button.addClass("hidden");
+    }
+}
 
 function hideTooltip(elem) {
     elem.firstChild.innerText="";
@@ -278,17 +417,17 @@ function sidebarToggle() {
     var html = $("html");
     if ( html.hasClass("sidebar-hidden") ) {
         html.removeClass("sidebar-hidden").addClass("sidebar-visible");
-        store.set('sidebar', 'visible');
+        store.set('mdbook-sidebar', 'visible');
     } else if ( html.hasClass("sidebar-visible") ) {
         html.removeClass("sidebar-visible").addClass("sidebar-hidden");
-        store.set('sidebar', 'hidden');
+        store.set('mdbook-sidebar', 'hidden');
     } else {
         if($("#sidebar").position().left === 0){
             html.addClass("sidebar-hidden");
-            store.set('sidebar', 'hidden');
+            store.set('mdbook-sidebar', 'hidden');
         } else {
             html.addClass("sidebar-visible");
-            store.set('sidebar', 'visible');
+            store.set('mdbook-sidebar', 'visible');
         }
     }
 }
@@ -300,30 +439,24 @@ function run_rust_code(code_block) {
         result_block = code_block.find(".result");
     }
 
-    let text;
-
-    let inner_code_block = code_block.find("code").first();
-    if (window.ace && inner_code_block.hasClass("editable")) {
-        let editor = window.ace.edit(inner_code_block.get(0));
-        text = editor.getValue();
-    } else {
-        text = inner_code_block.text();
-    }
+    let text = playpen_text(code_block);
 
     var params = {
-        version: "stable",
-        optimize: "0",
-        code: text,
-    };
+	channel: "stable",
+	mode: "debug",
+	crateType: "bin",
+	tests: false,
+	code: text,
+    }
 
     if(text.indexOf("#![feature") !== -1) {
-        params.version = "nightly";
+        params.channel = "nightly";
     }
 
     result_block.text("Running...");
 
     $.ajax({
-        url: "https://play.rust-lang.org/evaluate.json",
+        url: "https://play.rust-lang.org/execute",
         method: "POST",
         crossDomain: true,
         dataType: "json",
@@ -331,10 +464,53 @@ function run_rust_code(code_block) {
         data: JSON.stringify(params),
         timeout: 15000,
         success: function(response){
-            result_block.text(response.result);
+           result_block.text(response.success ? response.stdout : response.stderr);
         },
         error: function(qXHR, textStatus, errorThrown){
             result_block.text("Playground communication " + textStatus);
         },
     });
+}
+
+function create_text_searchindex() {
+    var searchindex = elasticlunr(function () {
+        this.addField('body');
+        this.addField('title');
+        this.setRef('id');
+    });
+    var content = $("#content");
+    var paragraphs = content.children();
+    var curr_title = "";
+    var curr_body = "";
+    var curr_ref = "";
+    var push = function(ref) {
+        if ((curr_title.length > 0 || curr_body.length > 0) && curr_ref.length > 0) {
+            var doc = {
+                "id": curr_ref,
+                "body": curr_body,
+                "title": curr_title
+            }
+            searchindex.addDoc(doc);
+        }
+        curr_body = "";
+        curr_title = "";
+        curr_ref = "";
+    };
+    paragraphs.each(function(index, element) {
+        // todo uppercase
+        var el = $(element);
+        if (el.prop('nodeName').toUpperCase() == "A") {
+            // new header, push old paragraph to index
+            push(index);
+            curr_title = el.text();
+            curr_ref = el.attr('href');
+        } else {
+            curr_body += " \n " + el.text();
+        }
+        // last paragraph
+        if (index == paragraphs.length - 1) {
+            push(index);
+        }
+    });
+    return searchindex;
 }

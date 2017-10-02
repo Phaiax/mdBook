@@ -46,6 +46,14 @@
             }
         </script>
 
+        <!-- Fetch elasticlunr.js from CDN but have a local fallback -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/elasticlunr/0.9.6/elasticlunr.min.js"></script>
+        <script>
+            if (typeof elasticlunr == 'undefined') {
+                document.write(unescape("%3Cscript src='elasticlunr.min.js'%3E%3C/script%3E"));
+            }
+        </script>
+
         <!-- Fetch store.js from local - TODO add CDN when 2.x.x is available on cdnjs -->
         <script src="store.js"></script>
 
@@ -56,19 +64,24 @@
     <body class="light">
         <!-- Set the theme before any content is loaded, prevents flash -->
         <script type="text/javascript">
-            var theme = store.get('theme');
+            var theme = store.get('mdbook-theme');
             if (theme === null || theme === undefined) { theme = 'light'; }
             $('body').removeClass().addClass(theme);
         </script>
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script type="text/javascript">
-            var sidebar = store.get('sidebar');
+            var sidebar = store.get('mdbook-sidebar');
             if (sidebar === "hidden") { $("html").addClass("sidebar-hidden") }
             else if (sidebar === "visible") { $("html").addClass("sidebar-visible") }
         </script>
 
         <div id="sidebar" class="sidebar">
+            <div id="searchresults-outer" class="searchresults-outer">
+                <div class="searchresults-header" id="searchresults-header"></div>
+                <ul id="searchresults">
+                </ul>
+            </div>
             <ul class="chapter"><li><a href="README.html"><strong>1.</strong> mdBook</a></li><li><a href="cli/cli-tool.html"><strong>2.</strong> Command Line Tool</a></li><li><ul class="section"><li><a href="cli/init.html"><strong>2.1.</strong> init</a></li><li><a href="cli/build.html"><strong>2.2.</strong> build</a></li><li><a href="cli/watch.html"><strong>2.3.</strong> watch</a></li><li><a href="cli/serve.html"><strong>2.4.</strong> serve</a></li><li><a href="cli/test.html"><strong>2.5.</strong> test</a></li></ul></li><li><a href="format/format.html"><strong>3.</strong> Format</a></li><li><ul class="section"><li><a href="format/summary.html"><strong>3.1.</strong> SUMMARY.md</a></li><li><a href="format/config.html"><strong>3.2.</strong> Configuration</a></li><li><a href="format/theme/theme.html" class="active"><strong>3.3.</strong> Theme</a></li><li><ul class="section"><li><a href="format/theme/index-hbs.html"><strong>3.3.1.</strong> index.hbs</a></li><li><a href="format/theme/syntax-highlighting.html"><strong>3.3.2.</strong> Syntax highlighting</a></li></ul></li><li><a href="format/mathjax.html"><strong>3.4.</strong> MathJax Support</a></li><li><a href="format/rust.html"><strong>3.5.</strong> Rust code specific features</a></li></ul></li><li><a href="lib/lib.html"><strong>4.</strong> Rust Library</a></li><li class="spacer"></li><li class="affix"><a href="misc/contributors.html">Contributors</a></li></ul>
         </div>
 
@@ -79,17 +92,21 @@
                     <div class="left-buttons">
                         <i id="sidebar-toggle" class="fa fa-bars"></i>
                         <i id="theme-toggle" class="fa fa-paint-brush"></i>
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ...">
+                        <i id="search-go" class="fa fa-search"></i>
                     </div>
 
                     <h1 class="menu-title">mdBook Documentation</h1>
 
                     <div class="right-buttons">
-                        <i id="print-button" class="fa fa-print" title="Print this book"></i>
+                        <a href="print.html">
+                            <i id="print-button" class="fa fa-print" title="Print this book"></i>
+                        </a>
                     </div>
                 </div>
 
                 <div id="content" class="content">
-                    <a class="header" href="theme.html#theme" id="theme"><h1>Theme</h1></a>
+                    <a class="header" href="format/theme/theme.html#theme" id="theme"><h1>Theme</h1></a>
 <p>The default renderer uses a <a href="http://handlebarsjs.com/">handlebars</a> template to render your markdown files and comes with a default theme
 included in the mdBook binary.</p>
 <p>The theme is totally customizable, you can selectively replace every file from the theme by your own by adding a
@@ -148,6 +165,8 @@ there is no point in overriding all the other files. Because custom files take p
         </script>
 
         <!-- Livereload script (if served using the cli tool) -->
+        
+
         
 
         

@@ -8,6 +8,7 @@ implementors["iron"] = [];
 implementors["libc"] = [];
 implementors["mio"] = [];
 implementors["nix"] = [];
+implementors["pulldown_cmark"] = ["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/fmt/trait.Octal.html\" title=\"trait core::fmt::Octal\">Octal</a> for <a class=\"struct\" href=\"pulldown_cmark/struct.Options.html\" title=\"struct pulldown_cmark::Options\">Options</a>",];
 implementors["regex_syntax"] = [];
 implementors["serde"] = [];
 implementors["syn"] = [];
