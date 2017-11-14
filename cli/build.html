@@ -62,8 +62,6 @@
             }
         </script>
 
-
-
         <!-- Fetch store.js from local - TODO add CDN when 2.x.x is available on cdnjs -->
         <script src="store.js"></script>
 
@@ -92,9 +90,9 @@
             <div class="page" tabindex="-1">
                 <div id="menu-bar" class="menu-bar">
                     <div class="left-buttons">
-                        <i id="sidebar-toggle" class="fa fa-bars"></i>
-                        <i id="theme-toggle" class="fa fa-paint-brush"></i>
-                        <i id="search-icon" class="fa fa-search"></i>
+                        <i id="sidebar-toggle" class="fa fa-bars" title="Toggle sidebar"></i>
+                        <i id="theme-toggle" class="fa fa-paint-brush" title="Change theme"></i>
+                        <i id="search-icon" class="fa fa-search" title="Search!"></i>
                     </div>
 
                     <h1 class="menu-title">mdBook Documentation</h1>
@@ -119,7 +117,6 @@
 
                 <div id="content" class="content">
                     <a class="header" href="cli/build.html#the-build-command" id="the-build-command"><h1>The build command</h1></a>
-<p><metadata>Crates: rayon</metadata></p>
 <p>The build command is used to render your book:</p>
 <pre><code class="language-bash">mdbook build
 </code></pre>
@@ -144,13 +141,13 @@ your default web browser after building it.</p>
 
                 <!-- Mobile navigation buttons -->
                 
-                    <a rel="prev" href="cli/init.html" class="mobile-nav-chapters previous">
+                    <a rel="prev" href="cli/init.html" class="mobile-nav-chapters previous" title="Previous chapter">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
                 
-                    <a rel="next" href="cli/watch.html" class="mobile-nav-chapters next">
+                    <a rel="next" href="cli/watch.html" class="mobile-nav-chapters next" title="Next chapter">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 

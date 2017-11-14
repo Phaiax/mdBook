@@ -17,6 +17,8 @@ $( document ).ready(function() {
         searchoptions : {
             bool: "AND",
             expand: true,
+            teaser_word_count : 30,
+            limit_results : 30,
             fields: {
                 title: {boost: 1},
                 body: {boost: 1},
@@ -25,13 +27,14 @@ $( document ).ready(function() {
         },
         mark_exclude : [], // ['.hljs']
         current_searchterm : "",
-        teaser_words : 30,
-        resultcount_limit : 30,
         SEARCH_PARAM : 'search',
         MARK_PARAM : 'highlight',
 
         SEARCH_HOTKEY_KEYCODE: 83,
         ESCAPE_KEYCODE: 27,
+        DOWN_KEYCODE: 40,
+        UP_KEYCODE: 38,
+        SELECT_KEYCODE: 13,
 
         formatSearchMetric : function(count, searchterm) {
             if (count == 1) {
@@ -220,7 +223,7 @@ $( document ).ready(function() {
             }
 
             var window_weight = [];
-            var window_size = Math.min(weighted.length, this.teaser_words);
+            var window_size = Math.min(weighted.length, this.searchoptions.teaser_word_count);
 
             var cur_sum = 0;
             for (var wordindex = 0; wordindex < window_size; wordindex++) {
@@ -280,8 +283,7 @@ $( document ).ready(function() {
 
             // Do the actual search
             var results = this.searchindex.search(searchterm, this.searchoptions);
-            var resultcount = (results.length > this.resultcount_limit)
-                ? this.resultcount_limit : results.length;
+            var resultcount = Math.min(results.length, this.searchoptions.limit_results);
 
             // Display search metrics
             this.searchresults_header.text(this.formatSearchMetric(resultcount, searchterm));
@@ -327,7 +329,14 @@ $( document ).ready(function() {
             //this.create_test_searchindex();
 
             $.getJSON("searchindex.json", function(json) {
-                //this_.searchindex = elasticlunr.Index.load(json);
+
+                if (json.enable == false) {
+                    this_.searchicon.hide();
+                    return;
+                }
+
+                this_.searchoptions = json.searchoptions;
+                //this_.searchindex = elasticlunr.Index.load(json.index);
 
                 // TODO: Workaround: reindex everything
                 var searchindex = elasticlunr(function () {
@@ -337,7 +346,8 @@ $( document ).ready(function() {
                     this.setRef('id');
                 });
                 window.mjs = json;
-                var docs = json.documentStore.docs;
+                window.search = this_;
+                var docs = json.index.documentStore.docs;
                 for (var key in docs) {
                     searchindex.addDoc(docs[key]);
                 }
@@ -364,6 +374,7 @@ $( document ).ready(function() {
         ,
         globalKeyHandler : function (e) {
             if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) { return; }
+
             if (e.keyCode == this.ESCAPE_KEYCODE) {
                 e.preventDefault();
                 this.searchbar.removeClass("active");
@@ -379,6 +390,38 @@ $( document ).ready(function() {
                 e.preventDefault();
                 this.searchbar_outer.slideDown()
                 this.searchbar.focus();
+                return;
+            }
+            if (this.hasFocus() && e.keyCode == this.DOWN_KEYCODE) {
+                e.preventDefault();
+                this.unfocusSearchbar();
+                this.searchresults.children('li').first().addClass("focus");
+                return;
+            }
+            if (!this.hasFocus() && (e.keyCode == this.DOWN_KEYCODE
+                                     || e.keyCode == this.UP_KEYCODE
+                                     || e.keyCode == this.SELECT_KEYCODE)) {
+                // not `:focus` because browser does annoying scrolling
+                var current_focus = search.searchresults.find("li.focus");
+                if (current_focus.length == 0) return;
+                e.preventDefault();
+                if (e.keyCode == this.DOWN_KEYCODE) {
+                    var next = current_focus.next()
+                    if (next.length > 0) {
+                        current_focus.removeClass("focus");
+                        next.addClass("focus");
+                    }
+                } else if (e.keyCode == this.UP_KEYCODE) {
+                    current_focus.removeClass("focus");
+                    var prev = current_focus.prev();
+                    if (prev.length == 0) {
+                        this.searchbar.focus();
+                    } else {
+                        prev.addClass("focus");
+                    }
+                } else {
+                    window.location = current_focus.children('a').attr('href');
+                }
             }
         }
         ,
@@ -626,15 +669,17 @@ $( document ).ready(function() {
         if(!lines_hidden) { return; }
 
         // add expand button
-        pre_block.prepend("<div class=\"buttons\"><i class=\"fa fa-expand\"></i></div>");
+        pre_block.prepend("<div class=\"buttons\"><i class=\"fa fa-expand\" title=\"Show hidden lines\"></i></div>");
 
         pre_block.find("i").click(function(e){
             if( $(this).hasClass("fa-expand") ) {
                 $(this).removeClass("fa-expand").addClass("fa-compress");
+                $(this).attr("title", "Hide lines");
                 pre_block.find("span.hidden").removeClass("hidden").addClass("unhidden");
             }
             else {
                 $(this).removeClass("fa-compress").addClass("fa-expand");
+                $(this).attr("title", "Show hidden lines");
                 pre_block.find("span.unhidden").removeClass("unhidden").addClass("hidden");
             }
         });
@@ -649,12 +694,12 @@ $( document ).ready(function() {
             pre_block.prepend("<div class=\"buttons\"></div>");
             buttons = pre_block.find(".buttons");
         }
-        buttons.prepend("<i class=\"fa fa-play play-button hidden\"></i>");
-        buttons.prepend("<i class=\"fa fa-copy clip-button\"><i class=\"tooltiptext\"></i></i>");
+        buttons.prepend("<i class=\"fa fa-play play-button hidden\" title=\"Run this code\"></i>");
+        buttons.prepend("<i class=\"fa fa-copy clip-button\" title=\"Copy to clipboard\"><i class=\"tooltiptext\"></i></i>");
 
         let code_block = pre_block.find("code").first();
         if (window.ace && code_block.hasClass("editable")) {
-            buttons.prepend("<i class=\"fa fa-history reset-button\"></i>");
+            buttons.prepend("<i class=\"fa fa-history reset-button\" title=\"Undo changes\"></i>");
         }
 
         buttons.find(".play-button").click(function(e){
